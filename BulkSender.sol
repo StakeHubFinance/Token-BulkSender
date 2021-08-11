@@ -1,377 +1,445 @@
-pragma solidity ^ 0.4.0;
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
 
 /**
- * @title BulkSender, support ETH and ERC20 Tokens, send ether or erc20 token to multiple addresses in batch
- * @dev To Use this Dapp: https://bulksender.app
-*/
+ * @dev Interface of the ERC20 standard as defined in the EIP.
+ */
+interface IERC20 {
+    /**
+     * @dev Returns the amount of tokens in existence.
+     */
+    function totalSupply() external view returns (uint256);
 
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
+    function balanceOf(address account) external view returns (uint256);
+
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `recipient`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transfer(address recipient, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     */
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk
+     * that someone may use both the old and the new allowance by unfortunate
+     * transaction ordering. One possible solution to mitigate this race
+     * condition is to first reduce the spender's allowance to 0 and set the
+     * desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     *
+     * Emits an {Approval} event.
+     */
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Moves `amount` tokens from `sender` to `recipient` using the
+     * allowance mechanism. `amount` is then deducted from the caller's
+     * allowance.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
+
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// CAUTION
+// This version of SafeMath should only be used with Solidity 0.8 or later,
+// because it relies on the compiler's built in overflow checks.
+
+/**
+ * @dev Wrappers over Solidity's arithmetic operations.
+ *
+ * NOTE: `SafeMath` is no longer needed starting with Solidity 0.8. The compiler
+ * now has built in overflow checking.
+ */
 library SafeMath {
-    function mul(uint a, uint b) internal pure returns(uint) {
-        uint c = a * b;
-        require(a == 0 || c / a == b);
-        return c;
+    /**
+     * @dev Returns the addition of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryAdd(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            uint256 c = a + b;
+            if (c < a) return (false, 0);
+            return (true, c);
+        }
     }
-    function div(uint a, uint b) internal pure returns(uint) {
-        require(b > 0);
-        uint c = a / b;
-        require(a == b * c + a % b);
-        return c;
+
+    /**
+     * @dev Returns the substraction of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function trySub(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            if (b > a) return (false, 0);
+            return (true, a - b);
+        }
     }
-    function sub(uint a, uint b) internal pure returns(uint) {
-        require(b <= a);
+
+    /**
+     * @dev Returns the multiplication of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryMul(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+            // benefit is lost if 'b' is also tested.
+            // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522
+            if (a == 0) return (true, 0);
+            uint256 c = a * b;
+            if (c / a != b) return (false, 0);
+            return (true, c);
+        }
+    }
+
+    /**
+     * @dev Returns the division of two unsigned integers, with a division by zero flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryDiv(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            if (b == 0) return (false, 0);
+            return (true, a / b);
+        }
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers, with a division by zero flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryMod(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            if (b == 0) return (false, 0);
+            return (true, a % b);
+        }
+    }
+
+    /**
+     * @dev Returns the addition of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `+` operator.
+     *
+     * Requirements:
+     *
+     * - Addition cannot overflow.
+     */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a + b;
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting on
+     * overflow (when the result is negative).
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     *
+     * - Subtraction cannot overflow.
+     */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         return a - b;
     }
-    function add(uint a, uint b) internal pure returns(uint) {
-        uint c = a + b;
-        require(c >= a);
-        return c;
+
+    /**
+     * @dev Returns the multiplication of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `*` operator.
+     *
+     * Requirements:
+     *
+     * - Multiplication cannot overflow.
+     */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a * b;
     }
-    function max64(uint64 a, uint64 b) internal pure returns(uint64) {
-        return a >= b ? a: b;
+
+    /**
+     * @dev Returns the integer division of two unsigned integers, reverting on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator.
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a / b;
     }
-    function min64(uint64 a, uint64 b) internal pure returns(uint64) {
-        return a < b ? a: b;
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * reverting when dividing by zero.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a % b;
     }
-    function max256(uint256 a, uint256 b) internal pure returns(uint256) {
-        return a >= b ? a: b;
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting with custom message on
+     * overflow (when the result is negative).
+     *
+     * CAUTION: This function is deprecated because it requires allocating memory for the error
+     * message unnecessarily. For custom revert reasons use {trySub}.
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     *
+     * - Subtraction cannot overflow.
+     */
+    function sub(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        unchecked {
+            require(b <= a, errorMessage);
+            return a - b;
+        }
     }
-    function min256(uint256 a, uint256 b) internal pure returns(uint256) {
-        return a < b ? a: b;
+
+    /**
+     * @dev Returns the integer division of two unsigned integers, reverting with custom message on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator. Note: this function uses a
+     * `revert` opcode (which leaves remaining gas untouched) while Solidity
+     * uses an invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function div(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        unchecked {
+            require(b > 0, errorMessage);
+            return a / b;
+        }
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * reverting with custom message when dividing by zero.
+     *
+     * CAUTION: This function is deprecated because it requires allocating memory for the error
+     * message unnecessarily. For custom revert reasons use {tryMod}.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function mod(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        unchecked {
+            require(b > 0, errorMessage);
+            return a % b;
+        }
     }
 }
 
 /**
- * @title Bulksender MultiSender, support ETH and ERC20 Tokens, send ether or erc20 token to multiple addresses in batch
- * @dev To Use this Dapp: https://bulksender.app
-*/
-
-contract ERC20Basic {
-    uint public totalSupply;
-    function balanceOf(address who) public constant returns(uint);
-    function transfer(address to, uint value) public;
-    event Transfer(address indexed from, address indexed to, uint value);
-}
-
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public constant returns(uint);
-    function transferFrom(address from, address to, uint value) public;
-    function approve(address spender, uint value) public;
-    event Approval(address indexed owner, address indexed spender, uint value);
-}
-
-/**
- * @title Bulksender MultiSender, support ETH and ERC20 Tokens
- * @dev To Use this Dapp: https://bulksender.app
-*/
-
-contract BasicToken is ERC20Basic {
-
-    using SafeMath for uint;
-    mapping(address =>uint) balances;
-
-    function transfer(address _to, uint _value) public {
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+ * @dev Provides information about the current execution context, including the
+ * sender of the transaction and its data. While these are generally available
+ * via msg.sender and msg.data, they should not be accessed in such a direct
+ * manner, since when dealing with meta-transactions the account sending and
+ * paying for execution may not be the actual sender (as far as an application
+ * is concerned).
+ *
+ * This contract is only required for intermediate, library-like contracts.
+ */
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address) {
+        return msg.sender;
     }
 
-    function balanceOf(address _owner) public constant returns(uint balance) {
-        return balances[_owner];
+    function _msgData() internal view virtual returns (bytes calldata) {
+        return msg.data;
     }
 }
 
 /**
- * @title BulkSender MultiSender, support ETH and ERC20 Tokens, send ether or erc20 token to multiple addresses in batch
- * @dev To Use this Dapp: https://bulksender.app
-*/
+ * @dev Contract module which provides a basic access control mechanism, where
+ * there is an account (an owner) that can be granted exclusive access to
+ * specific functions.
+ *
+ * By default, the owner account will be the one that deploys the contract. This
+ * can later be changed with {transferOwnership}.
+ *
+ * This module is used through inheritance. It will make available the modifier
+ * `onlyOwner`, which can be applied to your functions to restrict their use to
+ * the owner.
+ */
+abstract contract Ownable is Context {
+    address private _owner;
 
-contract StandardToken is BasicToken,ERC20 {
-    mapping(address => mapping(address =>uint)) allowed;
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    function transferFrom(address _from, address _to, uint _value) public {
-        balances[_to] = balances[_to].add(_value);
-        balances[_from] = balances[_from].sub(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
+    /**
+     * @dev Initializes the contract setting the deployer as the initial owner.
+     */
+    constructor() {
+        _setOwner(_msgSender());
     }
 
-    function approve(address _spender, uint _value) public {
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view virtual returns (address) {
+        return _owner;
     }
 
-    function allowance(address _owner, address _spender) public constant returns(uint remaining) {
-        return allowed[_owner][_spender];
-    }
-}
-
-/**
- * @title BulkSender MultiSender, support ETH and ERC20 Tokens, send ether or erc20 token to multiple addresses in batch
- * @dev To Use this Dapp: https://bulksender.app
-*/
-
-contract Ownable {
-    address public owner;
-
-    function Ownable() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(owner() == _msgSender(), "Ownable: caller is not the owner");
         _;
     }
-    function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
+
+    /**
+     * @dev Leaves the contract without owner. It will not be possible to call
+     * `onlyOwner` functions anymore. Can only be called by the current owner.
+     *
+     * NOTE: Renouncing ownership will leave the contract without an owner,
+     * thereby removing any functionality that is only available to the owner.
+     */
+    function renounceOwnership() public virtual onlyOwner {
+        _setOwner(address(0));
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner.
+     */
+    function transferOwnership(address newOwner) public virtual onlyOwner {
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        _setOwner(newOwner);
+    }
+
+    function _setOwner(address newOwner) private {
+        address oldOwner = _owner;
+        _owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
     }
 }
 
-/**
- * @title BulkSender MultiSender, support ETH and ERC20 Tokens, send ether or erc20 token to multiple addresses in batch
- * @dev To Use this Dapp: https://bulksender.app
-*/
-
 contract BulkSender is Ownable {
+    using SafeMath for uint256;
+    
+    uint256 public txFee;
+    uint256 public memberFee;
+    
+    address payable feeWallet;
+    
+    mapping(address => bool) memberStatus;
+    
+    receive() external payable {}
 
-    using SafeMath for uint;
-
-    event LogTokenBulkSent(address token, uint256 total);
-    event LogGetToken(address token, address receiver, uint256 balance);
-    address public receiverAddress;
-    uint public txFee = 0.01 ether;
-    uint public VIPFee = 1 ether;
-
-    /* VIP List */
-    mapping(address => bool) public vipList;
-
-    /*
-  *  get balance
-  */
-    function getBalance(address _tokenAddress) onlyOwner public {
-        address _receiverAddress = getReceiverAddress();
-        if (_tokenAddress == address(0)) {
-            require(_receiverAddress.send(address(this).balance));
-            return;
+    fallback() external payable {}
+    
+    function setFeeWallet(address payable _wallet) public payable onlyOwner {
+        feeWallet = _wallet;
+    }
+    
+    function setTxFee(uint256 _amount) public onlyOwner{
+        txFee = _amount;
+    }
+    
+    function setMemberFee(uint256 _amount) public onlyOwner {
+        memberFee = _amount;
+    }
+    
+    function revokeMember(address _toBeRevoked) public onlyOwner {
+        memberStatus[_toBeRevoked] = false;
+    }
+    
+    function buyMembership() external payable {
+        require(msg.value >= memberFee);
+        require(feeWallet.send(msg.value));
+        memberStatus[msg.sender] = true;
+    }
+    
+    function isMember(address _member) public view returns(bool) {
+        return memberStatus[_member];
+    }
+    
+    function bulksendToken(IERC20 _token, address[] calldata _receivers, uint256[] calldata _values) public payable 
+    {
+        uint256 msgValue = msg.value;
+        bool memStatus = isMember(msg.sender);
+        if(memStatus == false) {
+            require(msgValue >= txFee);
         }
-        StandardToken token = StandardToken(_tokenAddress);
-        uint256 balance = token.balanceOf(this);
-        token.transfer(_receiverAddress, balance);
-        emit LogGetToken(_tokenAddress, _receiverAddress, balance);
-    }
-
-    /*
-  *  Register VIP
-  */
-    function registerVIP() payable public {
-        require(msg.value >= VIPFee);
-        address _receiverAddress = getReceiverAddress();
-        require(_receiverAddress.send(msg.value));
-        vipList[msg.sender] = true;
-    }
-
-    /*
-  *  VIP list
-  */
-    function addToVIPList(address[] _vipList) onlyOwner public {
-        for (uint i = 0; i < _vipList.length; i++) {
-            vipList[_vipList[i]] = true;
-        }
-    }
-
-    /*
-    * Remove address from VIP List by Owner
-  */
-    function removeFromVIPList(address[] _vipList) onlyOwner public {
-        for (uint i = 0; i < _vipList.length; i++) {
-            vipList[_vipList[i]] = false;
+        require(_receivers.length == _values.length);
+        for (uint256 i = 0; i < _receivers.length; i++) {
+        require(_token.transferFrom(msg.sender, _receivers[i], _values[i]));
         }
     }
-
-    /*
-        * Check isVIP
-    */
-    function isVIP(address _addr) public view returns(bool) {
-        return _addr == owner || vipList[_addr];
-    }
-
-    /*
-        * set receiver address
-    */
-    function setReceiverAddress(address _addr) onlyOwner public {
-        require(_addr != address(0));
-        receiverAddress = _addr;
-    }
-
-    /*
-        * get receiver address
-    */
-    function getReceiverAddress() public view returns(address) {
-        if (receiverAddress == address(0)) {
-            return owner;
-        }
-
-        return receiverAddress;
-    }
-
-    /*
-        * set vip fee
-    */
-    function setVIPFee(uint _fee) onlyOwner public {
-        VIPFee = _fee;
-    }
-
-    /*
-        * set tx fee
-    */
-    function setTxFee(uint _fee) onlyOwner public {
-        txFee = _fee;
-    }
-
-    function ethSendSameValue(address[] _to, uint _value) internal {
-
-        uint sendAmount = _to.length.sub(1).mul(_value);
-        uint remainingValue = msg.value;
-
-        bool vip = isVIP(msg.sender);
-        if (vip) {
-            require(remainingValue >= sendAmount);
-        } else {
-            require(remainingValue >= sendAmount.add(txFee));
-        }
-        require(_to.length <= 255);
-
-        for (uint8 i = 1; i < _to.length; i++) {
-            remainingValue = remainingValue.sub(_value);
-            require(_to[i].send(_value));
-        }
-
-        emit LogTokenBulkSent(0x000000000000000000000000000000000000bEEF, msg.value);
-    }
-
-    function ethSendDifferentValue(address[] _to, uint[] _value) internal {
-
-        uint sendAmount = _value[0];
-        uint remainingValue = msg.value;
-
-        bool vip = isVIP(msg.sender);
-        if (vip) {
-            require(remainingValue >= sendAmount);
-        } else {
-            require(remainingValue >= sendAmount.add(txFee));
-        }
-
-        require(_to.length == _value.length);
-        require(_to.length <= 255);
-
-        for (uint8 i = 1; i < _to.length; i++) {
-            remainingValue = remainingValue.sub(_value[i]);
-            require(_to[i].send(_value[i]));
-        }
-        emit LogTokenBulkSent(0x000000000000000000000000000000000000bEEF, msg.value);
-
-    }
-
-    function coinSendSameValue(address _tokenAddress, address[] _to, uint _value) internal {
-
-        uint sendValue = msg.value;
-        bool vip = isVIP(msg.sender);
-        if (!vip) {
-            require(sendValue >= txFee);
-        }
-        require(_to.length <= 255);
-
-        address from = msg.sender;
-        uint256 sendAmount = _to.length.sub(1).mul(_value);
-
-        StandardToken token = StandardToken(_tokenAddress);
-        for (uint8 i = 1; i < _to.length; i++) {
-            token.transferFrom(from, _to[i], _value);
-        }
-
-        emit LogTokenBulkSent(_tokenAddress, sendAmount);
-
-    }
-
-    function coinSendDifferentValue(address _tokenAddress, address[] _to, uint[] _value) internal {
-        uint sendValue = msg.value;
-        bool vip = isVIP(msg.sender);
-        if (!vip) {
-            require(sendValue >= txFee);
-        }
-
-        require(_to.length == _value.length);
-        require(_to.length <= 255);
-
-        uint256 sendAmount = _value[0];
-        StandardToken token = StandardToken(_tokenAddress);
-
-        for (uint8 i = 1; i < _to.length; i++) {
-            token.transferFrom(msg.sender, _to[i], _value[i]);
-        }
-        emit LogTokenBulkSent(_tokenAddress, sendAmount);
-
-    }
-
-    /*
-        Send ether with the same value by a explicit call method
-    */
-
-    function sendEth(address[] _to, uint _value) payable public {
-        ethSendSameValue(_to, _value);
-    }
-
-    /*
-        Send ether with the different value by a explicit call method
-    */
-    function bulksend(address[] _to, uint[] _value) payable public {
-        ethSendDifferentValue(_to, _value);
-    }
-
-    /*
-        Send ether with the different value by a implicit call method
-    */
-
-    function bulkSendETHWithDifferentValue(address[] _to, uint[] _value) payable public {
-        ethSendDifferentValue(_to, _value);
-    }
-
-    /*
-        Send ether with the same value by a implicit call method
-    */
-
-    function bulkSendETHWithSameValue(address[] _to, uint _value) payable public {
-        ethSendSameValue(_to, _value);
-    }
-
-    /*
-        Send coin with the same value by a implicit call method
-    */
-
-    function bulkSendCoinWithSameValue(address _tokenAddress, address[] _to, uint _value) payable public {
-        coinSendSameValue(_tokenAddress, _to, _value);
-    }
-
-    /*
-        Send coin with the different value by a implicit call method, this method can save some fee.
-    */
-    function bulkSendCoinWithDifferentValue(address _tokenAddress, address[] _to, uint[] _value) payable public {
-        coinSendDifferentValue(_tokenAddress, _to, _value);
-    }
-
-    /*
-        Send coin with the different value by a explicit call method
-    */
-    function bulksendToken(address _tokenAddress, address[] _to, uint[] _value) payable public {
-        coinSendDifferentValue(_tokenAddress, _to, _value);
-    }
-    /*
-        Send coin with the same value by a explicit call method
-    */
-    function drop(address _tokenAddress, address[] _to, uint _value) payable public {
-        coinSendSameValue(_tokenAddress, _to, _value);
-    }
-
+    
 }
